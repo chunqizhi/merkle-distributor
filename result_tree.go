@@ -3,13 +3,11 @@ package distributor
 import (
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto"
-
 	"github.com/ethereum/go-ethereum/common"
-	// solsha3 "github.com/miguelmota/go-solidity-sha3"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func RToNode(account common.Address, amount *big.Int) common.Hash {
+func ResultRankToNode(account common.Address, amount *big.Int) common.Hash {
 	paddedAddress := common.LeftPadBytes(account.Bytes(), 32)
 	paddedAmount := common.LeftPadBytes(amount.Bytes(), 32)
 	var data []byte
@@ -19,8 +17,8 @@ func RToNode(account common.Address, amount *big.Int) common.Hash {
 	return hash
 }
 
-func RVerifyProof(account common.Address, amount *big.Int, proof Elements, root common.Hash) bool {
-	pair := RToNode(account, amount)
+func ResultRankVerifyProof(account common.Address, amount *big.Int, proof Elements, root common.Hash) bool {
+	pair := ResultRankToNode(account, amount)
 	for _, item := range proof {
 		pair = combinedHash(pair, item)
 	}
@@ -28,33 +26,33 @@ func RVerifyProof(account common.Address, amount *big.Int, proof Elements, root 
 	return pair == root
 }
 
-type RBalance struct {
+type ResultRank struct {
 	Account common.Address
 	Amount  *big.Int
 }
 
-type RBalanceTree struct {
-	rtree *MerkleTree
+type ResultRankTree struct {
+	tree *MerkleTree
 }
 
-func RNewBalanceTree(balances []RBalance) (*RBalanceTree, error) {
-	elements := make(Elements, 0, len(balances))
-	for _, balance := range balances {
-		elements = append(elements, RToNode(balance.Account, balance.Amount))
+func NewResultRankTree(resultRanks []ResultRank) (*ResultRankTree, error) {
+	elements := make(Elements, 0, len(resultRanks))
+	for _, resultRank := range resultRanks {
+		elements = append(elements, ResultRankToNode(resultRank.Account, resultRank.Amount))
 	}
 
-	rtree, err := NewMerkleTree(elements)
+	tree, err := NewMerkleTree(elements)
 	if err != nil {
 		return nil, err
 	}
 
-	return &RBalanceTree{rtree: rtree}, nil
+	return &ResultRankTree{tree: tree}, nil
 }
 
-func (b *RBalanceTree) RGetRoot() common.Hash {
-	return b.rtree.GetRoot()
+func (r *ResultRankTree) GetRoot() common.Hash {
+	return r.tree.GetRoot()
 }
 
-func (b *RBalanceTree) RGetProof(account common.Address, amount *big.Int) ([]common.Hash, error) {
-	return b.rtree.GetProof(RToNode(account, amount))
+func (r *ResultRankTree) GetProof(account common.Address, amount *big.Int) ([]common.Hash, error) {
+	return r.tree.GetProof(ResultRankToNode(account, amount))
 }
