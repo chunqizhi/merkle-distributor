@@ -3,18 +3,20 @@ package distributor
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/ethereum/go-ethereum/common"
-	solsha3 "github.com/miguelmota/go-solidity-sha3"
+	// solsha3 "github.com/miguelmota/go-solidity-sha3"
 )
 
 func RToNode(account common.Address, amount *big.Int) common.Hash {
-	var h common.Hash
-	sha3 := solsha3.SoliditySHA3(
-		[]string{"address", "uint256"},
-		[]interface{}{common.LeftPadBytes(account.Bytes(), 32), common.LeftPadBytes(amount.Bytes(), 32)},
-	)
-	copy(h[:], sha3)
-	return h
+	paddedAddress := common.LeftPadBytes(account.Bytes(), 32)
+	paddedAmount := common.LeftPadBytes(amount.Bytes(), 32)
+	var data []byte
+	data = append(data, paddedAddress...)
+	data = append(data, paddedAmount...)
+	hash := crypto.Keccak256Hash(data)
+	return hash
 }
 
 func RVerifyProof(account common.Address, amount *big.Int, proof Elements, root common.Hash) bool {
